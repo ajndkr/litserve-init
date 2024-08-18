@@ -1,8 +1,9 @@
-import torch
-from transformers import AutoImageProcessor, ResNetForImageClassification
 from io import BytesIO
-from PIL import Image
+
 import litserve as ls
+import torch
+from PIL import Image
+from transformers import AutoImageProcessor, ResNetForImageClassification
 
 
 class ResNetLitAPI(ls.LitAPI):
