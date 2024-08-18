@@ -80,21 +80,26 @@ def main(
     image.save(buffered, format="JPEG")
     image_bytes = buffered.getvalue()
 
+    start_time = time.time()
+
     df = asyncio.run(run(url, n_jobs, image_bytes))
+
+    run_time = time.time() - start_time
+
     df.to_csv(outfile, index=False)
 
     n_success = df.predicted_label.notna().sum()
     n_error = df.predicted_label.isna().sum()
 
     print("results:")
+    print(f"- total runtime: {run_time:.3f} s")
     print(f"- success: {n_success}")
     print(f"- error: {n_error}")
 
     if n_success > 0:
-        avg_elapsed_time = df[df.predicted_label.notna()].elapsed_time.mean()
-        print(
-            f"- avg elapsed time: {avg_elapsed_time * 1000:.3f} ms"
-        )
+        mean_elapsed_time_ms = df[df.predicted_label.notna()].elapsed_time.mean() * 1000
+        std_elapsed_time_ms = df[df.predicted_label.notna()].elapsed_time.std() * 1000
+        print(f"- avg elapsed time: {mean_elapsed_time_ms:.3f} ± {2 * std_elapsed_time_ms:.3f} ms")
 
 
 if __name__ == "__main__":
