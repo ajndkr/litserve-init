@@ -1,0 +1,4 @@
+litserve==0.1.5
+transformers[torch]==4.44.0
+pillow==10.4.0
+fastapi==0.112.1
