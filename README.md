@@ -28,6 +28,14 @@ LitServe.
 > **system requirements**: i used a 32-core linux machine with 2 NVIDIA GeForce
 > RTX 3080 Ti GPUs.
 
+each experiment sends `n` concurrent requests containing a single image for
+classification. The image can be found [here](./cats-image.png).
+
+in case of the LitServe application, I set the `max_batch_size` to 32 and
+`batch_timeout` to 0.05. This means that LitServe will batch incoming requests
+with a maximum batch size of 8 within 50 milliseconds for inference. The FastAPI
+application will process all incoming requests separately.
+
 ### total runtime (per experiment)
 
 | concurrent requests | FastAPI | LitServe |
