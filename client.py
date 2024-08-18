@@ -11,22 +11,24 @@ from PIL import Image
 async def post(
     client: httpx.AsyncClient, url: str, image_bytes: bytes
 ) -> tuple[str, float]:
+    output = {}
     start_time = time.time()
-    while True:
-        try:
-            response = await client.post(
-                url,
-                json={"image_bytes": image_bytes.hex()},
-            )
 
-            if response.status_code != 200:
-                print(f"Error: (code={response.status_code}, message={response.text})")
-                continue
+    try:
+        response = await client.post(
+            url,
+            json={"image_bytes": image_bytes.hex()},
+        )
 
-            return response.json(), start_time, time.time()
-        except Exception as e:
-            print("error: ", e)
-            continue
+        if response.status_code != 200:
+            print(f"error: (code={response.status_code}, message={response.text})")
+        else:
+            output = response.json()
+
+    except Exception as e:
+        print(f"error: (message={str(e)})")
+
+    return output, start_time, time.time()
 
 
 async def run_predictions(
@@ -45,8 +47,8 @@ async def run(url: str, n_jobs: int, image_bytes: bytes) -> pd.DataFrame:
             [
                 dict(
                     job_id=job_id,
-                    predicted_label=prediction["predicted_label"],
-                    predicted_class=prediction["predicted_class"],
+                    predicted_label=prediction.get("predicted_label", None),
+                    predicted_class=prediction.get("predicted_class", None),
                     start_time=pd.to_datetime(start_time, unit="s"),
                     end_time=pd.to_datetime(end_time, unit="s"),
                     elapsed_time=(end_time - start_time),
@@ -81,8 +83,18 @@ def main(
     df = asyncio.run(run(url, n_jobs, image_bytes))
     df.to_csv(outfile, index=False)
 
+    n_success = df.predicted_label.notna().sum()
+    n_error = df.predicted_label.isna().sum()
+
     print("results:")
-    print(df)
+    print(f"- success: {n_success}")
+    print(f"- error: {n_error}")
+
+    if n_success > 0:
+        avg_elapsed_time = df[df.predicted_label.notna()].elapsed_time.mean()
+        print(
+            f"- avg elapsed time: {avg_elapsed_time * 1000:.3f} ms"
+        )
 
 
 if __name__ == "__main__":
